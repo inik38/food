@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-dark: #0a0c10;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-glow: rgba(255, 255, 255, 0.15);
+  --primary-accent: #f43f5e; /* coral red */
+  --secondary-accent: #3b82f6; /* ocean blue */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --font-main: 'Outfit', sans-serif;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Background Blobs for Glassmorphism Context */
+.bg-blob-1, .bg-blob-2 {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(140px);
+  z-index: -1;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.bg-blob-1 {
+  width: 50vw;
+  height: 50vw;
+  background: var(--primary-accent);
+  top: -20%;
+  left: -10%;
+  animation: float1 15s ease-in-out infinite alternate;
+}
+
+.bg-blob-2 {
+  width: 40vw;
+  height: 40vw;
+  background: var(--secondary-accent);
+  bottom: -20%;
+  right: -10%;
+  animation: float2 20s ease-in-out infinite alternate;
+}
+
+@keyframes float1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(5%, 10%) scale(1.1); }
+}
+
+@keyframes float2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-10%, -5%) scale(1.05); }
+}
+
+/* Utility Classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
