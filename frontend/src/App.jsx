@@ -6,19 +6,19 @@ function App() {
   const [selectedImage, setSelectedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  
+
   // Chat History States
   const [chats, setChats] = useState([
     {
       id: 1,
-      title: "Паста «Аль Френо»",
+      title: "Новый рецепт",
       messages: [
-        { role: 'bot', text: "Привет! Я ваш ИИ-шеф. Что мы будем готовить сегодня?", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
+        { role: 'bot', text: "Привет! Я ваш ИИ-шеф на базе Gemini. Что мы будем готовить сегодня? Просто напишите блюдо или пришлите фото продуктов!", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
       ]
     }
   ])
   const [activeChatId, setActiveChatId] = useState(1)
-  
+
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
 
@@ -31,6 +31,24 @@ function App() {
   useEffect(() => {
     scrollToBottom()
   }, [activeChat?.messages, isLoading])
+
+  // Проверка связи с бэкендом
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/recipe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userMessage: 'тест' })
+        });
+        const data = await response.json();
+        console.log('✅ Бэкенд Gemini работает!');
+      } catch (error) {
+        console.error('❌ Бэкенд не запущен! Запусти: node server.js в папке backend');
+      }
+    };
+    checkBackend();
+  }, []);
 
   const handleImageClick = () => {
     fileInputRef.current.click()
@@ -52,7 +70,7 @@ function App() {
       id: newId,
       title: "Новый рецепт",
       messages: [
-        { role: 'bot', text: "Привет! Я готов анализировать ваши продукты. Пришлите фото или список ингредиентов.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
+        { role: 'bot', text: "Привет! Я готов анализировать ваши продукты. Пришлите фото или список ингредиентов.", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
       ]
     }
     setChats([newChat, ...chats])
@@ -66,7 +84,7 @@ function App() {
       role: 'user',
       text: inputVal,
       image: imagePreview,
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 
     // Update current chat with user message
@@ -81,67 +99,81 @@ function App() {
       }
       return chat
     })
-    
+
     setChats(updatedChats)
     setInputVal('')
     setSelectedImage(null)
     setImagePreview(null)
     setIsLoading(true)
 
-    // Simulate AI Response
-    setTimeout(() => {
-      let botResponse = ""
-      const text = userMessage.text.toLowerCase()
+    // Реальный запрос к Gemini
+    try {
+      let response;
 
-      const FULL_RECIPES = {
-        pasta: "⏱ **Время:** 25 мин | 📊 **Сложность:** Легко | 👥 **Порции:** 2\n\n📋 **Пищевая ценность (на порцию):**\nКалории: 480 ккал | Белки: 18г | Жиры: 22г | Углеводы: 52г\n\n🛒 **Ингредиенты:**\n• Паста (спагетти или фетучини) — 200г\n• Сливки 20% — 150мл\n• Чеснок — 3 зубчика (мелко нарезать)\n• Сыр Пармезан — 50г (натереть на мелкой тёрке)\n• Оливковое масло Extra Virgin — 2 ст.л.\n• Сливочное масло — 15г\n• Свежая петрушка — небольшой пучок\n• Соль морская — по вкусу\n• Чёрный перец свежемолотый — по вкусу\n• Мускатный орех — щепотка\n\n👨‍🍳 **Пошаговое приготовление:**\n\n**Шаг 1 — Варка пасты (10 мин)**\nВскипятите 2л воды, посолите (1 ст.л. соли на литр). Опустите пасту и варите на 1 минуту меньше, чем указано на упаковке — она дойдёт в соусе.\n\n**Шаг 2 — Основа соуса (3 мин)**\nНа среднем огне разогрейте оливковое и сливочное масло в сковороде. Добавьте нарезанный чеснок и обжаривайте 1 минуту до золотистого цвета. Не пережарьте — чеснок станет горьким!\n\n**Шаг 3 — Сливочная база (5 мин)**\nВлейте сливки, добавьте мускатный орех. Доведите до лёгкого кипения, убавьте огонь. Добавьте 2/3 пармезана и мешайте до однородной массы.\n\n**Шаг 4 — Соединение (3 мин)**\nПереложите пасту в соус, добавьте 3-4 ст.л. воды от варки (крахмал загустит соус). Перемешивайте щипцами 1-2 минуты на среднем огне.\n\n**Шаг 5 — Подача**\nВыложите на тёплые тарелки, посыпьте оставшимся пармезаном и нарезанной петрушкой. Приправьте свежемолотым перцем.\n\n💡 **Совет шефа:** Никогда не промывайте пасту после варки — крахмал на её поверхности помогает соусу «прилипать». Вода от варки пасты — секретный ингредиент идеального соуса!\n\n🔄 **Вариации:** Добавьте обжаренные грибы, бекон или вяленые томаты для новых вкусов.",
-
-        salad: "⏱ **Время:** 15 мин | 📊 **Сложность:** Очень легко | 👥 **Порции:** 2\n\n📋 **Пищевая ценность (на порцию):**\nКалории: 220 ккал | Белки: 4г | Жиры: 18г | Углеводы: 12г\n\n🛒 **Ингредиенты:**\n• Микс салатных листьев (руккола, шпинат, романо) — 150г\n• Огурец — 1 шт (средний)\n• Авокадо — 1 шт (спелый)\n• Черри томаты — 8-10 шт\n• Красный лук — 1/4 шт (тонкие полукольца)\n• Семечки подсолнуха или тыквы — 2 ст.л.\n\n**Для заправки:**\n• Оливковое масло Extra Virgin — 3 ст.л.\n• Лимонный сок — 1.5 ст.л.\n• Мёд жидкий — 1 ч.л.\n• Дижонская горчица — 0.5 ч.л.\n• Соль, перец — по вкусу\n\n👨‍🍳 **Пошаговое приготовление:**\n\n**Шаг 1 — Подготовка зелени (3 мин)**\nПромойте листья салата в холодной воде. Обсушите в салатной центрифуге или промокните полотенцем. Влажные листья разбавят заправку!\n\n**Шаг 2 — Нарезка овощей (5 мин)**\nОгурец нарежьте тонкими полукольцами. Черри разрежьте пополам. Лук нарежьте тончайшими полукольцами и замочите в холодной воде на 5 мин (уберёт горечь).\n\n**Шаг 3 — Авокадо (2 мин)**\nРазрежьте авокадо, удалите косточку. Нарежьте ломтиками прямо в кожуре, затем выложите ложкой. Сразу сбрызните лимонным соком, чтобы не потемнело.\n\n**Шаг 4 — Заправка (2 мин)**\nВ маленькой банке смешайте масло, лимонный сок, мёд и горчицу. Закройте крышкой и энергично потрясите 30 секунд. Посолите и поперчите.\n\n**Шаг 5 — Сборка и подача**\nВ большую миску выложите листья, сверху овощи и авокадо. Полейте заправкой непосредственно перед подачей. Посыпьте семечками.\n\n💡 **Совет шефа:** Заправляйте салат прямо перед подачей — листья быстро вянут от кислоты. Заправку можно приготовить заранее и хранить в холодильнике до 5 дней.\n\n🔄 **Вариации:** Добавьте сыр фета, креветки гриль или кусочки манго для тропической версии.",
-
-        chicken: "⏱ **Время:** 40 мин (+ 15 мин маринад) | 📊 **Сложность:** Средне | 👥 **Порции:** 2\n\n📋 **Пищевая ценность (на порцию):**\nКалории: 380 ккал | Белки: 42г | Жиры: 12г | Углеводы: 24г\n\n🛒 **Ингредиенты:**\n• Куриное филе — 400г (2 грудки)\n• Соевый соус — 4 ст.л.\n• Мёд натуральный — 2 ст.л.\n• Имбирь свежий — 2 см корня (натереть)\n• Чеснок — 3 зубчика (измельчить)\n• Рисовый уксус — 1 ст.л.\n• Кунжутное масло — 1 ст.л.\n• Крахмал кукурузный — 1 ст.л.\n• Кунжут белый — 2 ст.л. (для подачи)\n• Зелёный лук — 2 пера (для подачи)\n• Растительное масло — 2 ст.л. (для жарки)\n\n**Для гарнира:**\n• Рис басмати — 150г\n• Вода — 300мл\n\n👨‍🍳 **Пошаговое приготовление:**\n\n**Шаг 1 — Маринад (15 мин)**\nНарежьте филе на кусочки 3×3 см. Смешайте соевый соус, мёд, тёртый имбирь, чеснок, рисовый уксус и кунжутное масло. Залейте курицу и оставьте минимум на 15 минут (лучше 30).\n\n**Шаг 2 — Рис (20 мин)**\nПромойте рис 3-4 раза до прозрачной воды. Залейте водой, доведите до кипения, убавьте огонь до минимума, накройте крышкой. Варите 15 минут, не открывая крышку.\n\n**Шаг 3 — Обжарка курицы (8 мин)**\nДостаньте курицу из маринада (маринад сохраните!). Обсушите бумажным полотенцем. Разогрейте масло в сковороде на сильном огне до лёгкого дымка. Выложите курицу в один слой. Жарьте по 3 минуты с каждой стороны до золотистой корочки.\n\n**Шаг 4 — Соус терияки (5 мин)**\nРазведите крахмал в 2 ст.л. холодной воды. Влейте оставшийся маринад в сковороду с курицей. Добавьте крахмальную смесь. Помешивайте на среднем огне 2-3 минуты, пока соус не загустеет и не станет глянцевым.\n\n**Шаг 5 — Подача**\nВыложите рис на тарелку, сверху — курицу в соусе. Посыпьте кунжутом и нарезанным зелёным луком.\n\n💡 **Совет шефа:** Обсушивайте курицу перед жаркой — влага мешает образованию корочки. Сковорода должна быть очень горячей, чтобы получить карамелизацию, а не тушение.\n\n🔄 **Вариации:** Замените курицу на лосось или тофу. Добавьте брокколи или болгарский перец в последние 3 минуты готовки.",
-
-        cupcakes: "⏱ **Время:** 7 мин | 📊 **Сложность:** Элементарно | 👥 **Порции:** 1\n\n📋 **Пищевая ценность (на порцию):**\nКалории: 340 ккал | Белки: 8г | Жиры: 14г | Углеводы: 46г\n\n🛒 **Ингредиенты:**\n• Мука пшеничная — 3 ст.л. (с горкой)\n• Какао-порошок — 1.5 ст.л.\n• Сахар — 2 ст.л.\n• Разрыхлитель — 1/4 ч.л.\n• Щепотка соли\n• Яйцо — 1 шт\n• Молоко — 2 ст.л.\n• Растительное масло — 1 ст.л.\n• Ванильный экстракт — 1/4 ч.л.\n• Шоколадные капли — 1 ст.л. (по желанию)\n\n👨‍🍳 **Пошаговое приготовление:**\n\n**Шаг 1 — Сухая смесь (1 мин)**\nВозьмите большую керамическую кружку (300мл+). Насыпьте муку, какао, сахар, разрыхлитель и соль. Перемешайте вилкой до однородности.\n\n**Шаг 2 — Жидкие ингредиенты (1 мин)**\nДобавьте яйцо, молоко, масло и ваниль. Тщательно перемешайте вилкой, разбивая все комочки. Масса должна быть гладкой. Вмешайте шоколадные капли.\n\n**Шаг 3 — Микроволновка (2-3 мин)**\nПоставьте кружку в микроволновку на 800Вт на 2 минуты 30 секунд. Кекс поднимется выше края — это нормально. Если центр ещё жидкий — добавьте 15-20 секунд.\n\n**Шаг 4 — Отдых и подача (2 мин)**\nДостаньте кружку (осторожно, горячая!). Дайте постоять 1-2 минуты. По желанию добавьте сверху шарик мороженого, взбитые сливки или ягоды.\n\n💡 **Совет шефа:** Не перемешивайте тесто слишком долго — кекс станет «резиновым». Используйте кружку без металлического декора! Кекс лучше слегка недопечь, чем пересушить.\n\n🔄 **Вариации:** Замените какао на матчу для зелёного кекса, добавьте арахисовую пасту (1 ст.л.) для орехового вкуса, или положите внутрь кусочек шоколада для жидкой серединки."
+      if (selectedImage) {
+        // Если есть фото - отправляем на анализ
+        response = await fetch('http://localhost:3001/api/analyze-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: imagePreview })
+        });
+      } else {
+        // Обычный текстовый запрос рецепта
+        response = await fetch('http://localhost:3001/api/recipe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userMessage: inputVal })
+        });
       }
 
-      if (userMessage.image) {
-        botResponse = "### Результат анализа Шеф-ИИ 🔍\nНа вашем фото я успешно определил продукты: **куриная грудка, томаты и сыр**.\n\nРекомендую: **Курица «Капрезе»**\n⏱ **Время:** 30 мин | 📊 **Сложность:** Легко\n\n1. Сделайте надрезы в курице.\n2. Вложите помидоры и сыр.\n3. Запекайте 25 минут при 200°C.\n\nХотите более подробную инструкцию?"
-      } else if (text.includes("паст")) {
-        botResponse = `Конечно! Вот подробный рецепт:\n\n### ${FULL_RECIPES.pasta}`
-      } else if (text.includes("салат")) {
-        botResponse = `Без проблем! Вот рецепт:\n\n### ${FULL_RECIPES.salad}`
-      } else if (text.includes("куриц") || text.includes("терияк")) {
-        botResponse = `Вот как это приготовить:\n\n### ${FULL_RECIPES.chicken}`
-      } else if (text.includes("кекс")) {
-        botResponse = `Сладкое за 5 минут — это реально:\n\n### ${FULL_RECIPES.cupcakes}`
-      } else {
-        botResponse = "Интересный вопрос! С точки зрения кулинарии, это можно использовать как основу для соуса или маринада. Рассказать подробнее?"
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка сервера');
       }
 
       const botMsg = {
         role: 'bot',
-        text: botResponse,
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      }
+        text: data.reply,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
 
-      setChats(prev => prev.map(chat => 
-        chat.id === activeChatId ? { ...chat, messages: [...chat.messages, botMsg] } : chat
-      ))
-      setIsLoading(false)
-    }, 1500)
+      setChats(prev => prev.map(chat =>
+        chat.id === activeChatId
+          ? { ...chat, messages: [...chat.messages, botMsg] }
+          : chat
+      ));
+
+    } catch (error) {
+      console.error('API Error:', error);
+
+      const errorMsg = {
+        role: 'bot',
+        text: `❌ **Ошибка подключения к шеф-повару Gemini**\n\n${error.message}\n\n**Решение:**\n1. Открой новый терминал\n2. Перейди в папку backend: \`cd C:\\Projects\\food\\backend\`\n3. Запусти сервер: \`node server.js\`\n\nПосле запуска сервера обнови страницу и попробуй снова!`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setChats(prev => prev.map(chat =>
+        chat.id === activeChatId
+          ? { ...chat, messages: [...chat.messages, errorMsg] }
+          : chat
+      ));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const PREDEFINED_RECIPES = [
-    { id: 'pasta', icon: '🍝', title: 'Паста Аль Френо', desc: 'Сливочный соус и сыр' },
-    { id: 'salad', icon: '🥗', title: 'Фреш-Салат', desc: 'Легкий и витаминный' },
-    { id: 'chicken', icon: '🍗', title: 'Курица Терияки', desc: 'Азиатская классика' },
-    { id: 'cupcakes', icon: '🧁', title: 'Быстрые кексы', desc: 'Сладкое за 5 минут' }
+    { id: 'pasta', icon: '🍝', title: 'Паста Карбонара', desc: 'Классическая итальянская паста' },
+    { id: 'salad', icon: '🥗', title: 'Греческий салат', desc: 'Свежий и полезный' },
+    { id: 'chicken', icon: '🍗', title: 'Курица по-французски', desc: 'Нежная и сочная' },
+    { id: 'soup', icon: '🥣', title: 'Тыквенный суп', desc: 'Сливочный и ароматный' }
   ]
 
   const handleSuggestionClick = (title) => {
-    setInputVal(`Расскажи рецепт: ${title}`)
-    // Автоматическая отправка через небольшой delay для UX
+    setInputVal(`Дай рецепт: ${title}`)
     setTimeout(() => {
-      document.querySelector('.submit-btn').click()
+      document.querySelector('.submit-btn')?.click()
     }, 100)
   }
 
@@ -154,11 +186,11 @@ function App() {
         <header className="header">
           <div className="logo">
             <span>🍳</span>
-            <h1>Culinary AI</h1>
+            <h1>Culinary AI — Gemini</h1>
           </div>
           <div className="header-status">
             <div className="glass-pill">
-              <span style={{color: '#4ade80'}}>●</span> ИИ Активен
+              <span style={{ color: '#4ade80' }}>●</span> Gemini AI Активен
             </div>
           </div>
         </header>
@@ -171,8 +203,8 @@ function App() {
             </button>
             <div className="history-list">
               {chats.map(chat => (
-                <button 
-                  key={chat.id} 
+                <button
+                  key={chat.id}
                   className={`history-item ${chat.id === activeChatId ? 'active' : ''}`}
                   onClick={() => setActiveChatId(chat.id)}
                 >
@@ -188,24 +220,24 @@ function App() {
               {activeChat?.messages.map((msg, idx) => (
                 <div key={idx} className={`message ${msg.role}`}>
                   {msg.image && <img src={msg.image} alt="User upload" className="message-image" />}
-                  <div className="message-text" style={{whiteSpace: 'pre-wrap'}}>{msg.text}</div>
-                  <div style={{fontSize: '0.7rem', opacity: 0.5, marginTop: '5px', textAlign: 'right'}}>
+                  <div className="message-text" style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+                  <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '5px', textAlign: 'right' }}>
                     {msg.time}
                   </div>
                 </div>
               ))}
-              
+
               {/* Популярные идеи - показываем только в начале чата */}
               {activeChat?.messages.length === 1 && !isLoading && (
                 <div className="suggestions-grid animate-slide-up">
-                  <p className="suggestions-hint">Попробуйте одну из популярных идей:</p>
+                  <p className="suggestions-hint">🍽️ Попробуйте попросить рецепт:</p>
                   <div className="recipe-cards mini">
                     {PREDEFINED_RECIPES.map(item => (
                       <div key={item.id} className="recipe-card glass-panel" onClick={() => handleSuggestionClick(item.title)}>
-                        <div className="recipe-icon" style={{fontSize: '1.5rem', width: '40px', height: '40px'}}>{item.icon}</div>
-                        <div style={{display: 'flex', flexDirection: 'column'}}>
-                          <h3 style={{fontSize: '0.9rem'}}>{item.title}</h3>
-                          <p style={{fontSize: '0.7rem'}}>{item.desc}</p>
+                        <div className="recipe-icon" style={{ fontSize: '1.5rem', width: '40px', height: '40px' }}>{item.icon}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <h3 style={{ fontSize: '0.9rem' }}>{item.title}</h3>
+                          <p style={{ fontSize: '0.7rem' }}>{item.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -215,7 +247,7 @@ function App() {
 
               {isLoading && (
                 <div className="message bot typing-indicator">
-                  Шеф-ИИ печатает... <div className="spinner" style={{width: '12px', height: '12px'}}></div>
+                  🤖 Gemini шеф обдумывает рецепт... <div className="spinner" style={{ width: '12px', height: '12px' }}></div>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -224,16 +256,16 @@ function App() {
             <div className="chat-input-wrapper">
               <div className="chat-box glass-panel">
                 {imagePreview && (
-                  <div className="image-preview-wrapper" style={{padding: '10px 0'}}>
+                  <div className="image-preview-wrapper" style={{ padding: '10px 0' }}>
                     <div className="image-preview-container">
                       <img src={imagePreview} alt="Preview" className="image-preview" />
-                      <button className="remove-image-btn" onClick={() => {setSelectedImage(null); setImagePreview(null)}}>✕</button>
+                      <button className="remove-image-btn" onClick={() => { setSelectedImage(null); setImagePreview(null) }}>✕</button>
                     </div>
                   </div>
                 )}
-                <textarea 
-                  className="chat-input" 
-                  placeholder="Задайте вопрос ИИ-шефу..."
+                <textarea
+                  className="chat-input"
+                  placeholder="Например: рецепт борща, как приготовить пиццу, или пришли фото продуктов..."
                   value={inputVal}
                   onChange={(e) => setInputVal(e.target.value)}
                   onKeyDown={(e) => {
@@ -243,13 +275,13 @@ function App() {
                     }
                   }}
                 ></textarea>
-                
+
                 <div className="chat-actions">
-                  <div style={{display: 'flex', gap: '8px'}}>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      style={{display: 'none'}} 
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
                       ref={fileInputRef}
                       onChange={handleImageChange}
                     />
@@ -257,13 +289,13 @@ function App() {
                       📷
                     </button>
                   </div>
-                  
-                  <button 
-                    className="submit-btn" 
+
+                  <button
+                    className="submit-btn"
                     onClick={handleSendMessage}
                     disabled={isLoading}
                   >
-                    {isLoading ? <div className="spinner"></div> : 'Отправить ↗'}
+                    {isLoading ? <div className="spinner"></div> : 'Отправить →'}
                   </button>
                 </div>
               </div>
